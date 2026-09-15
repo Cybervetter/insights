@@ -1,0 +1,91 @@
+name: publish
+
+# Triggers a website-cybervetter rebuild + rollout whenever an article
+# changes on main. No service account key: GitHub mints an OIDC token for
+# this exact repository, exchanged for a short-lived credential that can
+# only trigger builds/rollouts on the website-cybervetter backend (see
+# CLAUDE.md's "no service account keys, ever" decision).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "articles/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      BACKEND: projects/cv-website-21257/locations/europe-west4/backends/website-cybervetter
+    steps:
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Trigger website-cybervetter rebuild
+        run: |
+          set -euo pipefail
+          TOKEN="${{ steps.auth.outputs.access_token }}"
+          BUILD_ID="insights-$(date +%s)"
+
+          echo "Creating build ${BUILD_ID}..."
+          curl -sf -X POST \
+            "https://firebaseapphosting.googleapis.com/v1/${BACKEND}/builds?buildId=${BUILD_ID}" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"source":{"codebase":{"branch":"main"}}}' > /dev/null
+
+          echo "Waiting for build to become READY..."
+          STATE=""
+          for i in $(seq 1 40); do
+            STATE=$(curl -sf "https://firebaseapphosting.googleapis.com/v1/${BACKEND}/builds/${BUILD_ID}" \
+              -H "Authorization: Bearer ${TOKEN}" | jq -r .state)
+            echo "  [${i}] ${STATE}"
+            if [ "${STATE}" = "READY" ]; then break; fi
+            if [ "${STATE}" = "FAILED" ]; then
+              echo "::error::Build ${BUILD_ID} failed"
+              exit 1
+            fi
+            sleep 15
+          done
+          if [ "${STATE}" != "READY" ]; then
+            echo "::error::Build did not reach READY in time"
+            exit 1
+          fi
+
+          ROLLOUT_ID="insights-$(date +%s)"
+          echo "Creating rollout ${ROLLOUT_ID}..."
+          curl -sf -X POST \
+            "https://firebaseapphosting.googleapis.com/v1/${BACKEND}/rollouts?rolloutId=${ROLLOUT_ID}" \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"build\":\"${BACKEND}/builds/${BUILD_ID}\"}" > /dev/null
+
+          echo "Waiting for rollout to succeed..."
+          STATE=""
+          for i in $(seq 1 20); do
+            STATE=$(curl -sf "https://firebaseapphosting.googleapis.com/v1/${BACKEND}/rollouts/${ROLLOUT_ID}" \
+              -H "Authorization: Bearer ${TOKEN}" | jq -r .state)
+            echo "  [${i}] ${STATE}"
+            if [ "${STATE}" = "SUCCEEDED" ]; then break; fi
+            if [ "${STATE}" = "FAILED" ]; then
+              echo "::error::Rollout ${ROLLOUT_ID} failed"
+              exit 1
+            fi
+            sleep 10
+          done
+          if [ "${STATE}" != "SUCCEEDED" ]; then
+            echo "::error::Rollout did not succeed in time"
+            exit 1
+          fi
+
+          echo "Deployed successfully."
