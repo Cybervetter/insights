@@ -38,11 +38,14 @@ jobs:
           BUILD_ID="insights-$(date +%s)"
 
           echo "Creating build ${BUILD_ID}..."
-          curl -sf -X POST \
+          HTTP_CODE=$(curl -s -o /tmp/build-response.json -w "%{http_code}" -X POST \
             "https://firebaseapphosting.googleapis.com/v1/${BACKEND}/builds?buildId=${BUILD_ID}" \
             -H "Authorization: Bearer ${TOKEN}" \
             -H "Content-Type: application/json" \
-            -d '{"source":{"codebase":{"branch":"main"}}}' > /dev/null
+            -d '{"source":{"codebase":{"branch":"main"}}}')
+          echo "HTTP ${HTTP_CODE}"
+          cat /tmp/build-response.json
+          if [ "${HTTP_CODE}" -ge 300 ]; then exit 1; fi
 
           echo "Waiting for build to become READY..."
           STATE=""
