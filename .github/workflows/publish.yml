@@ -31,6 +31,10 @@ jobs:
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
           token_format: access_token
 
+      - name: Debug — show token identity
+        run: |
+          curl -s "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${{ steps.auth.outputs.access_token }}"
+
       - name: Trigger website-cybervetter rebuild
         run: |
           set -euo pipefail
