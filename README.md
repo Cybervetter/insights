@@ -2,6 +2,23 @@
 
 Source content for [cybervetter.com/insights](https://cybervetter.com/insights) — published here as Markdown for transparency and reference. This repository is the **source of truth** for article content; `website-cybervetter` fetches it at build time and renders it in the site's own design.
 
+## Articles
+
+Newest first — regenerated automatically by `.github/workflows/publish.yml` on every push that changes `articles/`, so this list never drifts from what's actually published.
+
+<!-- ARTICLES:START -->
+- **[Security Left, Security in the Cloud, and the New Question of Securing AI Itself](articles/security-left-cloud-and-securing-ai.md)** — 17 August 2026
+  DevSecOps and cloud security are now well-established disciplines — but AI is reshaping both how software gets built and what security teams need to defend. A practical look at where the real risk sits, beyond the hype.
+- **[AI Coding Assistants Didn't Create Supply-Chain Risk — They Accelerated It](articles/ai-coding-assistants-and-supply-chain-risk.md)** — 10 August 2026
+  AI-assisted development is now mainstream in most engineering teams, and it genuinely speeds delivery. It has also opened new paths into the software supply chain that traditional review processes weren't built to catch.
+- **[Hardening Is Not a Project: Building Resilience Into Systems That Never Stop Changing](articles/hardening-is-not-a-project.md)** — 3 August 2026
+  Secure configuration, identity management, and patching are too often treated as one-off compliance exercises. Genuine resilience comes from treating hardening as a continuous discipline — and from auditors and engineers actually talking to each other.
+- **[What Technical Due Diligence Finds That the Questionnaire Never Will](articles/what-technical-due-diligence-finds.md)** — 20 July 2026
+  A clean vendor questionnaire and a passed compliance audit tell you what an organisation says about itself. Only hands-on technical inspection tells you what is actually running.
+- **[Inside the SOC: Why Detection and Response Is a Discipline, Not a Dashboard](articles/inside-the-soc-detection-and-response.md)** — 6 July 2026
+  Behind every well-run Security Operations Centre is less about the tools on screen and more about triage discipline, documentation habits, and honest post-incident learning. Here is what actually separates fast, defensible incident response from slow, chaotic response.
+<!-- ARTICLES:END -->
+
 ## Format
 
 Each article is one file in `articles/`, named `<slug>.md`, matching its URL at `/insights/<slug>`.

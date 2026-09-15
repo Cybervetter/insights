@@ -14,7 +14,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
   id-token: write
 
 jobs:
@@ -23,6 +23,24 @@ jobs:
     env:
       BACKEND: projects/cv-website-21257/locations/europe-west4/backends/website-cybervetter
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Regenerate README article index
+        run: python3 scripts/build_index.py
+
+      - name: Commit index if it changed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- README.md; then
+            echo "No change to README.md."
+            exit 0
+          fi
+          git config user.name "Adrian Voss"
+          git config user.email "adrian.voss@cybervetter.com"
+          git add README.md
+          git commit -m "Update article index"
+          git push
+
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
@@ -30,10 +48,6 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
           token_format: access_token
-
-      - name: Debug — show token identity
-        run: |
-          curl -s "https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${{ steps.auth.outputs.access_token }}"
 
       - name: Trigger website-cybervetter rebuild
         run: |
@@ -47,9 +61,11 @@ jobs:
             -H "Authorization: Bearer ${TOKEN}" \
             -H "Content-Type: application/json" \
             -d '{"source":{"codebase":{"branch":"main"}}}')
-          echo "HTTP ${HTTP_CODE}"
-          cat /tmp/build-response.json
-          if [ "${HTTP_CODE}" -ge 300 ]; then exit 1; fi
+          if [ "${HTTP_CODE}" -ge 300 ]; then
+            echo "::error::Build creation failed (HTTP ${HTTP_CODE})"
+            cat /tmp/build-response.json
+            exit 1
+          fi
 
           echo "Waiting for build to become READY..."
           STATE=""
