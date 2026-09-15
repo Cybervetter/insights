@@ -7,6 +7,10 @@ Source content for [cybervetter.com/insights](https://cybervetter.com/insights) 
 Newest first — regenerated automatically by `.github/workflows/publish.yml` on every push that changes `articles/`, so this list never drifts from what's actually published.
 
 <!-- ARTICLES:START -->
+- **[The CRA Reporting Clock Started. Most Manufacturers Cannot Yet Meet It.](articles/cra-reporting-clock-started.md)** — 14 September 2026
+  The Cyber Resilience Act's vulnerability reporting obligations took effect on 11 September 2026. The timelines are measured in hours, and they assume a manufacturer already knows what is inside its own products — which is the part most organisations have not solved.
+- **[The Certificate Is Issued to a System, Not to a Week](articles/the-certificate-is-issued-to-a-system.md)** — 31 August 2026
+  An audit samples a fortnight of evidence and infers a year of behaviour. That inference only holds where the management system runs on habit rather than on preparation — which is a question about people, not about documentation.
 - **[Security Left, Security in the Cloud, and the New Question of Securing AI Itself](articles/security-left-cloud-and-securing-ai.md)** — 17 August 2026
   DevSecOps and cloud security are now well-established disciplines — but AI is reshaping both how software gets built and what security teams need to defend. A practical look at where the real risk sits, beyond the hype.
 - **[AI Coding Assistants Didn't Create Supply-Chain Risk — They Accelerated It](articles/ai-coding-assistants-and-supply-chain-risk.md)** — 10 August 2026
