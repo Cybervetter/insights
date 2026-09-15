@@ -1,0 +1,39 @@
+---
+title: "AI Coding Assistants Didn't Create Supply-Chain Risk — They Accelerated It"
+standfirst: "AI-assisted development is now mainstream in most engineering teams, and it genuinely speeds delivery. It has also opened new paths into the software supply chain that traditional review processes weren't built to catch."
+authorName: "Adrian Voss"
+authorTitle: "Senior Consultant, CYBERVETTER"
+published: "2026-08-10"
+lastReviewed: "2026-08-10"
+relatedServices:
+  - title: "DevSecOps & Secure Development Enablement"
+    to: "/services/technical-assurance/devsecops"
+  - title: "Digital Vetting & Cyber Due Diligence"
+    to: "/services/vetting/cyber-due-diligence"
+---
+
+I'm not a skeptic of AI coding assistants. Used well, they compress a lot of routine work — boilerplate, test scaffolding, first drafts of integration code — into minutes instead of hours, and I've seen genuinely strong engineers use them to move faster without cutting corners. What I am skeptical of is the assumption, still common in a lot of engineering organisations I've talked to, that the code coming out of these tools deserves the same trust as code a developer wrote and understood line by line. It doesn't, and the security and audit practice around AI-assisted development hasn't caught up to that gap yet.
+
+## The dependency problem is now a generation problem
+
+Software supply-chain risk used to be mostly about what a developer chose to pull in — a package they found, evaluated, and added to a manifest. AI coding assistants change that model in a subtle but important way: the model is suggesting the dependency, often mid-flow, embedded in generated code the developer may accept with a single keystroke. The suggestion is based on patterns in training data and statistical likelihood, not on a live check against what actually exists or what's currently maintained.
+
+This has produced a specific, well-documented failure mode over the past couple of years that's come to be known as "slopsquatting": large language models confidently hallucinating package names that sound plausible but don't exist, and attackers registering those exact names on public package registries, betting that enough developers — or enough AI assistants suggesting the same hallucinated name to different users — will install them without checking. It's a genuinely new attack vector, and it's a direct product of how these models work: they generate the statistically likely next token, not a verified fact, and a package name that "sounds right" for a given ecosystem is exactly the kind of thing a model will produce with high confidence even when it's fabricated.
+
+The more mundane version of this problem is arguably more damaging in aggregate: AI assistants suggesting real packages that are outdated, abandoned, or have known vulnerabilities, simply because that was the dominant pattern in the training data and the model has no live visibility into the current CVE landscape or a package's actual maintenance status. I've reviewed codebases where an AI-suggested library was pulled in specifically because it looked idiomatic and modern in the suggestion, when a maintained, better-supported alternative was one search away. The tool wasn't wrong in a way that would trigger obvious suspicion — it was subtly, plausibly wrong, which is a harder failure mode to catch than an outright broken suggestion.
+
+## Secrets, review fatigue, and the trust gradient
+
+The second pattern worth taking seriously is credential and secrets exposure. AI coding assistants are frequently given broad context — an entire repository, sometimes adjacent config files or environment templates — to produce better suggestions. That context sometimes includes hardcoded credentials, API keys, or connection strings that were never meant to leave a local environment, and there have been enough incidents of secrets surfacing in AI-assisted commits, in prompts sent to third-party model APIs, or in generated code that echoes back a credential it was exposed to, that this has moved from theoretical to a standard line item in any current audit of AI-assisted development practice. The fix is largely the same discipline organisations should have had before AI assistants existed — secrets should never live in code or config files in plaintext, full stop — but the tooling has made the consequence of that bad habit both more likely and faster to propagate.
+
+The subtler issue is what I'd call review fatigue, or more precisely, review theatre. Code review as a control assumes a human is genuinely evaluating logic, not just skimming past a plausible-looking diff. AI-generated code is, almost by design, plausible-looking — it's fluent, it's idiomatic, it often includes comments and follows house style, because that's what the model was trained to produce. That fluency is exactly what makes it easier to wave through review without the same scrutiny a rougher, obviously human-written first draft would attract. I've watched reviewers approve AI-generated pull requests faster than they'd approve equivalent human-written ones, precisely because the code looked more finished. Looking finished and being correct are not the same property, and conflating them is, in my view, the single biggest cultural risk AI coding tools introduce into a development organisation — bigger than any individual vulnerability class.
+
+## What actually needs to change in practice
+
+None of this argues for banning AI coding assistants, which is neither realistic nor, frankly, a good use of anyone's energy at this point. It argues for treating AI-generated code the way you'd treat a contribution from a fast, well-read, but occasionally confidently wrong junior contractor who has no accountability for the outcome — useful, worth using, but not worth exempting from your controls.
+
+Concretely, a few things belong in any current secure development practice. Dependency provenance checks need to happen after generation, not just at the manifest level during a periodic audit — automated verification, as part of the CI pipeline, that every package pulled in actually exists on the intended registry, matches an expected namespace, and isn't a same-day or suspiciously young addition to that registry, which is one of the more reliable signals for typosquatting and slopsquatting alike. SBOM generation needs to be continuous and tied to the build, not a point-in-time exercise for an audit or a customer questionnaire, precisely because AI-assisted development changes the dependency graph faster and more frequently than manual development did.
+
+Secrets scanning in CI/CD is no longer optional hygiene; it needs to run pre-commit and pre-merge, with hard gates rather than advisory warnings, because the volume of AI-assisted commits makes manual vigilance an unreliable control on its own. And human review gates need to be explicitly recalibrated for AI-generated code — not necessarily longer review times, but different review questions. Rather than "does this look right," the operative question needs to be "do I understand why this works, and would I have written it this way." If a reviewer can't answer that, the fluency of the output shouldn't substitute for the accountability a real understanding provides.
+
+The productivity gains from AI-assisted coding are real and, in my view, worth having. But every previous wave of development tooling that removed friction from writing code — from package managers to low-code platforms — also expanded what could go wrong quietly, at scale, before anyone noticed. AI coding assistants are the same story, moving faster. The organisations that will handle this well are the ones treating it as a supply-chain and governance problem now, rather than waiting for the first serious incident to make the case for them.
