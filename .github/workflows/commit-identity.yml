@@ -3,7 +3,9 @@ name: Commit identity
 # DEC-2034: only Adrian Voss and Marieta Musat may author commits in any
 # Cybervetter/Cybernating repository, and no AI may ever be attributed. The
 # CI/CD pipeline's own bot identities are allowed (clarified 2026-10-03):
-# cv-generator[bot] (cv-workflows regenerated artefacts) and GitHub Actions.
+# cv-generator[bot] (cv-workflows regenerated artefacts) and GitHub Actions,
+# plus the automation GitHub App bots (DEC-2049): cybernating-factory[bot]
+# (Digital Product Factory) and cybervetter-ci[bot].
 # Local git hooks (infrastructure/scripts/cv-install-git-guards.sh) stop most
 # violations before they are made; this check runs on GitHub itself, so a
 # commit made anywhere - another machine, a clone without the hooks, an
@@ -35,6 +37,8 @@ jobs:
             adrian.voss@cybervetter.com marieta.musat@cybervetter.com
             cv-generator[bot]@cybervetter.com
             41898282+github-actions[bot]@users.noreply.github.com
+            337223569+cybernating-factory[bot]@users.noreply.github.com
+            337228298+cybervetter-ci[bot]@users.noreply.github.com
           # GitHub itself is the committer of merges made in the web UI or API.
           ALLOWED_COMMITTER_EXTRA: "noreply@github.com"
         run: |
