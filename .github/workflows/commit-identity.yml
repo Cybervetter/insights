@@ -1,0 +1,62 @@
+name: Commit identity
+
+# DEC-2034: only Adrian Voss and Marieta Musat may author commits in any
+# Cybervetter/Cybernating repository, and no AI may ever be attributed. The
+# CI/CD pipeline's own bot identities are allowed (clarified 2026-10-03):
+# cv-generator[bot] (cv-workflows regenerated artefacts) and GitHub Actions.
+# Local git hooks (infrastructure/scripts/cv-install-git-guards.sh) stop most
+# violations before they are made; this check runs on GitHub itself, so a
+# commit made anywhere - another machine, a clone without the hooks, an
+# automated pusher - is caught on push.
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  commit-identity:
+    name: Commit identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check every new commit's author, committer and trailers
+        env:
+          EVENT: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          ALLOWED: >-
+            adrian.voss@cybervetter.com marieta.musat@cybervetter.com
+            cv-generator[bot]@cybervetter.com
+            41898282+github-actions[bot]@users.noreply.github.com
+          # GitHub itself is the committer of merges made in the web UI or API.
+          ALLOWED_COMMITTER_EXTRA: "noreply@github.com"
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "pull_request" ]; then
+            commits=$(git rev-list "$BASE..$HEAD")
+          elif [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            commits=$(git rev-list "$BEFORE..$AFTER")
+          else
+            commits="$AFTER"   # new branch, or a rewritten history: check the pushed head
+          fi
+          bad=0
+          for c in $commits; do
+            ae=$(git log -1 --format=%ae "$c"); ce=$(git log -1 --format=%ce "$c")
+            subject=$(git log -1 --format=%s "$c")
+            case " $ALLOWED " in *" $ae "*) ;; *)
+              echo "::error::$c author <$ae> may not author commits here (DEC-2034): $subject"; bad=1 ;; esac
+            case " $ALLOWED $ALLOWED_COMMITTER_EXTRA " in *" $ce "*) ;; *)
+              echo "::error::$c committer <$ce> may not commit here (DEC-2034): $subject"; bad=1 ;; esac
+            if git log -1 --format=%B "$c" | grep -Eiq '^(Co-Authored-By|Signed-off-by):.*(claude|anthropic|chatgpt|openai|gemini|copilot)'; then
+              echo "::error::$c carries an AI co-author/signed-off-by trailer (DEC-2034): $subject"; bad=1
+            fi
+          done
+          [ "$bad" -eq 0 ] && echo "All $(echo $commits | wc -w | tr -d ' ') commit(s) OK."
+          exit $bad
